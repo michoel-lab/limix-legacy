@@ -18,7 +18,7 @@ PANAMA module in limix
 import limix_legacy.deprecated.modules.qtl as qtl
 import limix_legacy.deprecated.stats.fdr as fdr
 from limix_legacy.deprecated.stats.pca import *
-import limix_legacy.deprecated as dlimix_legacy
+import limix_legacy.deprecated as limix_legacy
 import scipy as sp
 import scipy.linalg as la
 import pdb
@@ -141,13 +141,13 @@ class PANAMA:
         if LinearARD:
             self.Xpanama /= self.Xpanama.std(0)
         self.Kpanama = covar_1.K()
-        self.Kpanama/= self.Kpanama.diagonal().mean()
+#        self.Kpanama/= self.Kpanama.diagonal().mean()
 
         # Ktot
         self.Ktot = covar_1.K()
         for c_i in range(len(self.Ks)):
             self.Ktot += covar.getCovariance(c_i+1).K()
-        self.Ktot/= self.Ktot.diagonal().mean()
+ #       self.Ktot/= self.Ktot.diagonal().mean()
 
         #store variances
         V = {}
@@ -155,14 +155,16 @@ class PANAMA:
             V['LinearARD'] = covar_1.getParams()**2*covar_1.getX().var(0)
         else:
             V['Kpanama'] = sp.array([covar_1.K().diagonal().mean()])
-        if self.use_Kpop:
-            V['Ks'] = sp.array([covar.getCovariance(c_i+1).K().diagonal().mean() for c_i in range(len(self.Ks))])
+#        if self.use_Kpop:
+#            V['Ks'] = sp.array([covar.getCovariance(c_i+1).K().diagonal().mean() for c_i in range(len(self.Ks))])
+        V['Ks'] = sp.array([covar.getCovariance(c_i+1).K() for c_i in range(len(self.Ks))])
         V['noise'] = gp.getParams()['lik']**2
         self.varianceComps = V
 
         # predictions
         Ki = la.inv(ll.K()+covar.K())
         self.Ypanama = sp.dot(covar_1.K(),sp.dot(Ki,self.Y))
+        self.LL = ll.K()
 
     def get_Ypanama(self):
         """
@@ -184,7 +186,8 @@ class PANAMA:
         """
         return self.Kpanama
 
-    def get_K(self,i):
+#    def get_K(self,i):
+    def get_K(self):
         """
         Returns:
             Ktot (normalized Kpanama+Kpop)
@@ -197,3 +200,5 @@ class PANAMA:
             vector of variance components of the PANAMA, Kpop and noise contributions
         """
         return self.varianceComps
+    def get_ll(self):
+        return self.LL
